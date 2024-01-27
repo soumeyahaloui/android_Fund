@@ -127,6 +127,11 @@ class SecondScreen(Screen):
                 valign="middle"  # Center-align text vertically
             )
 
+            # Adjustments for top_text in the SecondScreen class
+            top_text.size_hint = (0.9, None)  # Take 90% of the width and automatic height
+            top_text.height = '48dp'  # Assign a height that scales properly
+            top_text.pos_hint = {'center_x': 0.5, 'top': 1}  # Position at the top
+
             # Ensure text alignment
             top_text.bind(size=top_text.setter('text_size'))
             self.widget_ids[f'top_text_{i}'] = top_text  # Assign ID
