@@ -142,7 +142,7 @@ class SecondScreen(Screen):
             # Adjustments for top_text in the SecondScreen class
             top_text.size_hint = (0.8, None)  # Take 90% of the width and automatic height
             top_text.height = dp(30)  # Assign a height that scales properly
-            top_text.pos_hint = {'center_x': 0.5, 'top': 1}  # Position at the top
+            top_text.pos_hint = {'center_x': 0.5, 'top': 0.99}  # Position at the top
 
             # Ensure text alignment
             top_text.bind(size=top_text.setter('text_size'))
@@ -158,11 +158,11 @@ class SecondScreen(Screen):
             # Adjustments for image in the SecondScreen class
             image.size_hint = (0.8, 0.3)  # Adjust the width and height percentages as necessary
             image.allow_stretch = True  # Allow image to stretch to fill the space
-            image.pos_hint = {'center_x': 0.5, 'center_y': 0.5}  # Center in the middle of the FloatLayout
+            image.pos_hint = {'center_x': 0.5, 'center_y': 0.7}  # Center in the middle of the FloatLayout
 
             # Container for small buttons
             button_container = GridLayout(rows=1, size_hint=(None, None),size=(200, 50),  # same size as bottom_text
-                pos_hint={'center_x': 0.5, 'y': 0.1}
+                pos_hint={'center_x': 0.5, 'y': 0.27}
             )
             # Adjustments for button_container in the SecondScreen class
             button_container.size_hint = (0.8, None)
@@ -196,7 +196,7 @@ class SecondScreen(Screen):
             # Adjustments for custom_amount_input in the SecondScreen class
             custom_amount_input.size_hint = (0.6, None)
             custom_amount_input.height = dp(40)  # Adjust the height as necessary
-            custom_amount_input.pos_hint = {'center_x': 0.5, 'y': 0.1}
+            custom_amount_input.pos_hint = {'center_x': 0.4, 'y': 0.4}
 
             self.widget_dict[f'custom_amount_{i}'] = custom_amount_input
             image_layout.add_widget(custom_amount_input)
@@ -212,7 +212,7 @@ class SecondScreen(Screen):
             # Adjustments for submit_button in the SecondScreen class
             submit_button.size_hint = (0.2, None)
             submit_button.height = dp(40)  # Adjust the height as necessary
-            submit_button.pos_hint = {'right': custom_amount_input.pos_hint['center_x'] + 0.25, 'y': 0.1}
+            submit_button.pos_hint = {'right': custom_amount_input.pos_hint['center_x'] + 0.5, 'y': 0.4}
             
             submit_button.bind(on_press=lambda instance, x=custom_amount_input, counter_key=f'counter_{i}':
                                self.show_confirmation_from_input(x, counter_key))
@@ -235,7 +235,7 @@ class SecondScreen(Screen):
             # For bottom_text, make it responsive
             bottom_text.size_hint = (0.8, None)
             bottom_text.height = dp(30)  # Adjust the height as necessary
-            bottom_text.pos_hint = {'center_x': 0.5, 'y': 0.05}
+            bottom_text.pos_hint = {'center_x': 0.5, 'y': 0.17}
 
             self.add_frame(bottom_text)
             image_layout.add_widget(bottom_text)
