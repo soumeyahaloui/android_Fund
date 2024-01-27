@@ -169,20 +169,30 @@ class SecondScreen(Screen):
             button_container.height = dp(40)
             button_container.padding = [dp(2)] * 4  # Padding on all sides
 
-            # For buttons within button_container
-            button.size_hint = (1 / len(button_container.children), 1)  # Equal width for all buttons
-
-            # Add TextInput for custom donation amount
             custom_amount_input = TextInput(
                 hint_text='Enter Num',
                 # Grey color for the placeholder
                 hint_text_color=[0.5, 0.5, 0.5, 1],
-
                 multiline=False,
                 size_hint=(None, None),
                 size=(140, 50),
                 pos_hint={'center_x': 0.4, 'y': 0.2}
             )
+
+            for amount in ["1", "5", "50", "100"]:
+                button = Button(text=amount, size_hint=(None, 1), width=dp(48))  # Set button width using dp
+                button.bind(on_press=self.create_button_callback(amount, f'counter_{i}', custom_amount_input))
+                button_container.add_widget(button)
+
+            # Be sure to adjust the size_hint of the buttons after adding them to the container:
+            for button in button_container.children:
+                button.size_hint_x = 1 / len(button_container.children)
+                
+            # For buttons within button_container
+            button.size_hint = (1 / len(button_container.children), 1)  # Equal width for all buttons
+
+            # Add TextInput for custom donation amount
+          
             # Adjustments for custom_amount_input in the SecondScreen class
             custom_amount_input.size_hint = (0.6, None)
             custom_amount_input.height = dp(40)  # Adjust the height as necessary
@@ -211,12 +221,7 @@ class SecondScreen(Screen):
 
             # Create and add the small buttons
             # Inside the loop where you bind buttons to callbacks
-            for amount in ["1", "5", "50", "100"]:
-                button = Button(text=amount, size_hint=(None, 1), width=dp(48))  # Set button width using dp
-                button.bind(on_press=lambda instance, amt=amount, key=f'counter_{i}', input_field=custom_amount_input:
-                            self.show_confirmation(amt, key, input_field))
-                button_container.add_widget(button)
-
+            
 
             image_layout.add_widget(button_container)
             # Bottom Button
@@ -257,6 +262,12 @@ class SecondScreen(Screen):
         menu_button.bind(on_release=self.open_menu)
         self.add_widget(menu_button)
         # Don't forget to add the main layout to the screen
+
+
+    def create_button_callback(self, amt, key, input_field):
+        def button_callback(instance):
+            self.show_confirmation(amt, key, input_field)
+        return button_callback
 
     def fetch_data(self):
         url = 'https://fundraising-flask.onrender.com/get_data'
