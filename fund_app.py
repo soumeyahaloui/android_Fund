@@ -251,6 +251,7 @@ class SecondScreen(Screen):
                     top_text_widget = self.widget_ids.get(f'top_text_{i+1}')
 
                     if image_widget and 'Image' in data_item:
+                        logging.info(f"Setting image source to: {data_item['Image']}")
                         image_widget.source = data_item['Image']
                     if top_text_widget and 'Amount' in data_item:
                         top_text_widget.text = f"Goal: {data_item['Amount']}"
