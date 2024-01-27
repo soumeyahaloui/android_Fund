@@ -19,6 +19,7 @@ import traceback
 from kivy.loader import Loader
 from kivy.uix.image import AsyncImage
 from kivy.clock import Clock
+from kivy.metrics import dp
 
 
 
@@ -104,13 +105,14 @@ class SecondScreen(Screen):
         row_height = screen_height / self.rows
         
 
-        layout = GridLayout(cols=self.cols, spacing=10, padding=10,
-                            size_hint=(1, 1)) 
+        layout = GridLayout(cols=self.cols, spacing=dp(10), padding=dp(10), size_hint=(1, None))
+        layout.bind(minimum_height=layout.setter('height'))
         self.add_widget(layout)
 
-        # Adjustments for GridLayout in the SecondScreen class
-        layout.spacing = '10dp'
-        layout.padding = '10dp'
+        # Adjust the spacing and padding in the GridLayout
+        layout.spacing = dp(2)
+        layout.padding = dp(2)
+
 
         # Loop to create the image and button pairs
         for i in range(1, 5):
@@ -138,8 +140,8 @@ class SecondScreen(Screen):
             )
 
             # Adjustments for top_text in the SecondScreen class
-            top_text.size_hint = (0.9, None)  # Take 90% of the width and automatic height
-            top_text.height = '48dp'  # Assign a height that scales properly
+            top_text.size_hint = (0.8, None)  # Take 90% of the width and automatic height
+            top_text.height = dp(30)  # Assign a height that scales properly
             top_text.pos_hint = {'center_x': 0.5, 'top': 1}  # Position at the top
 
             # Ensure text alignment
@@ -148,29 +150,27 @@ class SecondScreen(Screen):
             image_layout.add_widget(top_text)
 
             # Image between the buttons
-            image = Image(source='',
-                          size_hint=(None, None),
-                          size=(200, 200),
-                          pos_hint={'center_x': 0.5, 'center_y': 0.6}
-                          )
+            image = Image(source='', size_hint=(0.8, 0.3), allow_stretch=True)
+            image.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
             self.widget_ids[f'image_{i}'] = image  # Assign ID
             image_layout.add_widget(image)
 
             # Adjustments for image in the SecondScreen class
-            image.size_hint = (0.5, 0.5)  # Take 50% of the parent widget size
+            image.size_hint = (0.8, 0.3)  # Adjust the width and height percentages as necessary
+            image.allow_stretch = True  # Allow image to stretch to fill the space
             image.pos_hint = {'center_x': 0.5, 'center_y': 0.5}  # Center in the middle of the FloatLayout
 
             # Container for small buttons
-            button_container = GridLayout(
-                rows=1,
-                size_hint=(None, None),
-                size=(200, 50),  # same size as bottom_text
+            button_container = GridLayout(rows=1, size_hint=(None, None),size=(200, 50),  # same size as bottom_text
                 pos_hint={'center_x': 0.5, 'y': 0.1}
             )
             # Adjustments for button_container in the SecondScreen class
-            button_container.size_hint = (0.6, None)
-            button_container.height = '48dp'
-            button_container.pos_hint = {'center_x': 0.5, 'center_y': 0.2}
+            button_container.size_hint = (0.8, None)
+            button_container.height = dp(40)
+            button_container.padding = [dp(2)] * 4  # Padding on all sides
+
+            # For buttons within button_container
+            button.size_hint = (1 / len(button_container.children), 1)  # Equal width for all buttons
 
             # Add TextInput for custom donation amount
             custom_amount_input = TextInput(
@@ -184,9 +184,9 @@ class SecondScreen(Screen):
                 pos_hint={'center_x': 0.4, 'y': 0.2}
             )
             # Adjustments for custom_amount_input in the SecondScreen class
-            custom_amount_input.size_hint = (0.4, None)
-            custom_amount_input.height = '48dp'
-            custom_amount_input.pos_hint = {'center_x': 0.4, 'y': 0.1}
+            custom_amount_input.size_hint = (0.6, None)
+            custom_amount_input.height = dp(40)  # Adjust the height as necessary
+            custom_amount_input.pos_hint = {'center_x': 0.5, 'y': 0.1}
 
             self.widget_dict[f'custom_amount_{i}'] = custom_amount_input
             image_layout.add_widget(custom_amount_input)
@@ -201,7 +201,7 @@ class SecondScreen(Screen):
             )
             # Adjustments for submit_button in the SecondScreen class
             submit_button.size_hint = (0.2, None)
-            submit_button.height = '48dp'
+            submit_button.height = dp(40)  # Adjust the height as necessary
             submit_button.pos_hint = {'right': custom_amount_input.pos_hint['center_x'] + 0.25, 'y': 0.1}
             
             submit_button.bind(on_press=lambda instance, x=custom_amount_input, counter_key=f'counter_{i}':
@@ -212,7 +212,7 @@ class SecondScreen(Screen):
             # Create and add the small buttons
             # Inside the loop where you bind buttons to callbacks
             for amount in ["1", "5", "50", "100"]:
-                button = Button(text=amount, size_hint=(0.25, 1))
+                button = Button(text=amount, size_hint=(None, 1), width=dp(48))  # Set button width using dp
                 button.bind(on_press=lambda instance, amt=amount, key=f'counter_{i}', input_field=custom_amount_input:
                             self.show_confirmation(amt, key, input_field))
                 button_container.add_widget(button)
@@ -227,6 +227,11 @@ class SecondScreen(Screen):
                 pos_hint={'center_x': 0.5, 'y': 0}
             )
             
+            # For bottom_text, make it responsive
+            bottom_text.size_hint = (0.8, None)
+            bottom_text.height = dp(30)  # Adjust the height as necessary
+            bottom_text.pos_hint = {'center_x': 0.5, 'y': 0.05}
+
             self.add_frame(bottom_text)
             image_layout.add_widget(bottom_text)
             self.widget_dict[f'bottom_text_{i}'] = bottom_text
@@ -243,6 +248,12 @@ class SecondScreen(Screen):
             size=(100, 50),
             pos_hint={'center_x': 0.5, 'y': 0}
         )
+
+        # For menu_button, make it responsive
+        menu_button.size_hint = (0.5, None)
+        menu_button.height = dp(40)  # Adjust the height as necessary
+        menu_button.pos_hint = {'center_x': 0.5, 'bottom': 1}
+
         menu_button.bind(on_release=self.open_menu)
         self.add_widget(menu_button)
         # Don't forget to add the main layout to the screen
@@ -377,6 +388,7 @@ class SecondScreen(Screen):
         content = GridLayout(cols=1, spacing=10, size_hint_y=None)
         content.add_widget(
             Label(text=f"Are you sure you want to donate {amount}?"))
+
 
         # Buttons for confirmation
         btn_layout = GridLayout(cols=2, spacing=10, size_hint_y=None)
