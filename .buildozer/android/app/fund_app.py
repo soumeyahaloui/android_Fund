@@ -649,7 +649,7 @@ class BeneficiaryScreen(Screen):
         self.add_black_frame(framed_layout)
 
         # Create widgets to display the completed set
-        completed_image = Image(source=completed_set['Image'], size_hint=(
+        completed_image = AsyncImage(source=completed_set['Image'], size_hint=(
             None, None), size=(200, 200), pos_hint={'center_x': 0.5, 'center_y': 0.65})
         completed_label = Label(
             text=f"Raised: {completed_set['Amount']}",
