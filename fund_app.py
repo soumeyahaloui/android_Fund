@@ -150,7 +150,7 @@ class SecondScreen(Screen):
             image_layout.add_widget(top_text)
 
             # Image between the buttons
-            image = Image(source='', size_hint=(0.8, 0.3), allow_stretch=True)
+            image = AsyncImage(source='', size_hint=(0.8, 0.3), allow_stretch=True)
             image.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
             self.widget_ids[f'image_{i}'] = image  # Assign ID
             image_layout.add_widget(image)
