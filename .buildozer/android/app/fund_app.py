@@ -42,7 +42,7 @@ class FirstScreen(Screen):
     def __init__(self, **kwargs):
         super(FirstScreen, self).__init__(**kwargs)
 
-        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundr.png?v=1706210211746',
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundra.png?v=1706453653572',
                 allow_stretch=True,
                 keep_ratio=False)
         self.add_widget(bg)
