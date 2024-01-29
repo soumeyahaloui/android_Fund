@@ -70,6 +70,31 @@ class FirstScreen(Screen):
         donate_button.bind(on_press=self.go_to_second_screen)
         layout.add_widget(donate_button)
 
+
+        login_signup_button = Button(text="Login/Signup", size_hint=(0.5, None), height=dp(40))
+        login_signup_button.bind(on_press=self.show_login_signup_options)
+        layout.add_widget(login_signup_button)
+
+    def show_login_signup_options(self, instance):
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
+        login_btn = Button(text="Login")
+        signup_btn = Button(text="Signup")
+        content.add_widget(login_btn)
+        content.add_widget(signup_btn)
+
+        popup = Popup(title="Login/Signup", content=content, size_hint=(None, None), size=(300, 200))
+        login_btn.bind(on_press=lambda x: self.go_to_login(popup))
+        signup_btn.bind(on_press=lambda x: self.go_to_signup(popup))
+        popup.open()
+
+    def go_to_login(self, popup):
+        popup.dismiss()
+        self.manager.current = 'login'
+
+    def go_to_signup(self, popup):
+        popup.dismiss()
+        self.manager.current = 'signup'
+
     def go_to_second_screen(self, instance):
         self.manager.current = 'second'
 
@@ -673,6 +698,114 @@ class BeneficiaryScreen(Screen):
         instance.frame.pos = (instance.pos[0] - 10, instance.pos[1] - 10)
         instance.frame.size = (instance.size[0] + 20, instance.size[1] + 20)
 
+class LoginScreen(Screen):
+    def __init__(self, **kwargs):
+        super(LoginScreen, self).__init__(**kwargs)
+        layout = GridLayout(cols=1, spacing=10, padding=10)
+
+        # Username/Number input
+        self.username_input = TextInput(hint_text='Username or Number', multiline=False)
+        layout.add_widget(self.username_input)
+
+        # Password input
+        self.password_input = TextInput(hint_text='Password', password=True, multiline=False)
+        layout.add_widget(self.password_input)
+
+        # Login button
+        login_button = Button(text='Login')
+        login_button.bind(on_press=self.login_user)
+        layout.add_widget(login_button)
+
+        # Add the layout to the screen
+        self.add_widget(layout)
+
+    def login_user(self, instance):
+        username = self.username_input.text
+        password = self.password_input.text
+        login_data = {'username': username, 'password': password}
+        login_url = 'https://fundraising-flask.onrender.com/login'
+        UrlRequest(login_url, req_body=json.dumps(login_data),
+                   on_success=self.on_login_success, on_failure=self.on_login_failure,
+                   method='POST', req_headers={'Content-type': 'application/json'})
+
+    def on_login_success(self, request, result):
+        # Handle successful login
+        # For example, navigate to a different screen or display a success message
+        print("Login successful:", result)
+        self.manager.current = 'second'  # Navigate to SecondScreen
+
+
+    def on_login_failure(self, request, result):
+        # Handle login failure
+        # Display an error message to the user
+        print("Login failed:", result)
+        # You can use Popup or another widget to show the error
+
+
+class SignUpScreen(Screen):
+    def __init__(self, **kwargs):
+        super(SignUpScreen, self).__init__(**kwargs)
+        layout = GridLayout(cols=1, spacing=10, padding=10)
+
+        # Username input
+        self.username_input = TextInput(hint_text='Username', multiline=False)
+        layout.add_widget(self.username_input)
+
+        # Number input
+        self.number_input = TextInput(hint_text='phone number', multiline=False)
+        layout.add_widget(self.number_input)
+
+        # Password input
+        self.password_input = TextInput(hint_text='Password', password=True, multiline=False)
+        layout.add_widget(self.password_input)
+
+        # Confirm Password input
+        self.confirm_password_input = TextInput(hint_text='Confirm Password', password=True, multiline=False)
+        layout.add_widget(self.confirm_password_input)
+
+        # Signup button
+        signup_button = Button(text='Sign Up')
+        signup_button.bind(on_press=self.register_user)
+        layout.add_widget(signup_button)
+
+        # Add the layout to the screen
+        self.add_widget(layout)
+
+    def register_user(self, instance):
+        username = self.username_input.text
+        number = self.number_input.text
+        password = self.password_input.text
+        confirm_password = self.confirm_password_input.text
+
+        if password != confirm_password:
+            self.show_error_popup("Passwords do not match.")
+            return
+
+        signup_data = {'username': username, 'number': number, 'password': password}
+        signup_url = 'https://fundraising-flask.onrender.com/register'
+        UrlRequest(signup_url, req_body=json.dumps(signup_data),
+                   on_success=self.on_signup_success, on_failure=self.on_signup_failure,
+                   method='POST', req_headers={'Content-type': 'application/json'})
+
+    def on_signup_success(self, request, result):
+        # Handle successful signup
+        # For example, navigate to the login screen or display a success message
+        print("Signup successful:", result)
+        self.manager.current = 'second'  # Navigate to SecondScreen
+
+
+    def on_signup_failure(self, request, result):
+        # Handle signup failure
+        # Display an error message to the user
+        print("Signup failed:", result)
+        # You can use Popup or another widget to show the error
+
+    def show_error_popup(self, message):
+        popup_content = Label(text=message)
+        popup = Popup(title="Error",
+                      content=popup_content,
+                      size_hint=(None, None), size=(300, 150))
+        popup.open()
 
 class MyApp(App):
 
@@ -681,5 +814,7 @@ class MyApp(App):
         sm.add_widget(FirstScreen(name='first'))
         sm.add_widget(SecondScreen(name='second'))
         sm.add_widget(BeneficiaryScreen(name='beneficiary'))
-        self.icon = 'https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundrr.ico?v=1706210215068'
+        sm.add_widget(LoginScreen(name='login'))
+        sm.add_widget(SignUpScreen(name='signup'))
+        
         return sm
