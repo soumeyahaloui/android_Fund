@@ -76,16 +76,20 @@ class FirstScreen(Screen):
         layout.add_widget(login_signup_button)
 
     def show_login_signup_options(self, instance):
-        content = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        login_btn = Button(text="Login")
-        signup_btn = Button(text="Signup")
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10, size_hint_y=None)
+        # Set the height of the BoxLayout to the combined height of the buttons and spacing
+        content.height = dp(100)  # Adjust the height based on your needs
+
+        login_btn = Button(text="Login", size_hint=(1, None), height=dp(40))
+        signup_btn = Button(text="Signup", size_hint=(1, None), height=dp(40))
         content.add_widget(login_btn)
         content.add_widget(signup_btn)
 
-        popup = Popup(title="Login/Signup", content=content, size_hint=(None, None), size=(300, 200))
+        popup = Popup(title="Login/Signup", content=content, size_hint=(None, None), size=(300, content.height))
         login_btn.bind(on_press=lambda x: self.go_to_login(popup))
         signup_btn.bind(on_press=lambda x: self.go_to_signup(popup))
         popup.open()
+
 
     def go_to_login(self, popup):
         popup.dismiss()
