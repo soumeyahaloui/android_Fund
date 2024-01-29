@@ -85,7 +85,7 @@ class FirstScreen(Screen):
         content.add_widget(login_btn)
         content.add_widget(signup_btn)
 
-        popup = Popup(title="Login/Signup", content=content, size_hint=(None, None), size=(300, content.height))
+        popup = Popup(content=content, size_hint=(None, None), size=(300, content.height), title_size=0)
         login_btn.bind(on_press=lambda x: self.go_to_login(popup))
         signup_btn.bind(on_press=lambda x: self.go_to_signup(popup))
         popup.open()
@@ -291,7 +291,10 @@ class SecondScreen(Screen):
         menu_button.bind(on_release=self.open_menu)
         self.add_widget(menu_button)
         # Don't forget to add the main layout to the screen
-
+        
+    def go_to_first_screen(self):
+        # Method to switch to FirstScreen
+        self.manager.current = 'first'
 
     def create_button_callback(self, amt, key, input_field):
         def button_callback(instance):
@@ -356,8 +359,15 @@ class SecondScreen(Screen):
 
         dropdown.add_widget(beneficiary_btn)
 
+        # Open button (previously Option 2)
+        open_btn = Button(text='Open', size_hint_y=None, height=44)
+        open_btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
+            dropdown, self.go_to_first_screen))
+
+        dropdown.add_widget(open_btn)
+
         # Other options
-        for option in ['Option 1', 'Option 2', 'Option 3']:
+        for option in ['Option 1', 'Option 3']:
             btn = Button(text=option, size_hint_y=None, height=44)
             btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
                 dropdown, lambda: dropdown.select(btn.text)))
@@ -651,6 +661,13 @@ class BeneficiaryScreen(Screen):
             dropdown, lambda: self.go_to_main_screen(btn)))
 
         dropdown.add_widget(main_btn)
+
+        # Open button (previously Option 2)
+        open_btn = Button(text='Open', size_hint_y=None, height=44)
+        open_btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
+            dropdown, self.go_to_first_screen))
+
+        dropdown.add_widget(open_btn)
 
         # Other options
         for option in ['Option 2', 'Option 3']:
