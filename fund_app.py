@@ -360,6 +360,13 @@ class SecondScreen(Screen):
         self.add_widget(menu_button)
         # Don't forget to add the main layout to the screen
         
+        self.planet_button = PlanetButton(
+            size_hint=(None, None),
+            size=(dp(40), dp(40)),  # Button size
+            pos_hint={'center_x': 0.1, 'center_y': 0.04}
+        )
+        self.add_widget(self.planet_button)
+
     def go_to_first_screen(self):
         # Method to switch to FirstScreen
         self.manager.current = 'first'
@@ -678,8 +685,10 @@ class SecondScreen(Screen):
 
         # Use the base URL in the UrlRequest
         UrlRequest(f'{base_url}/get_family_data/{next_family_id}', on_success=lambda req, res: self.update_frame_with_new_data(f'counter_{self.available_frames.pop(0)}', res), on_error=self.on_request_error, on_failure=self.on_request_error)
-
-
+    
+    def update_planet_button(self, initial):
+    # Update the text label inside the planet button with the user's first initial
+        self.planet_button.text_label.text = initial
 
 class BeneficiaryScreen(Screen):
     def __init__(self, **kwargs):
@@ -850,6 +859,9 @@ class LoginScreen(Screen):
         # Handle successful login
         # For example, navigate to a different screen or display a success message
         print("Login successful:", result)
+        first_initial = self.username_input.text[0].upper() if self.username_input.text else ''
+        # Update the planet button on the SecondScreen
+        self.manager.get_screen('second').update_planet_button(first_initial)
         self.manager.current = 'second'  # Navigate to SecondScreen
 
 
