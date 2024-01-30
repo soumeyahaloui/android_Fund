@@ -4,7 +4,7 @@ from kivy.uix.image import Image
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
-from kivy.graphics import Color, Rectangle
+from kivy.graphics import Color, Rectangle, RoundedRectangle
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -20,7 +20,74 @@ from kivy.loader import Loader
 from kivy.uix.image import AsyncImage
 from kivy.clock import Clock
 from kivy.metrics import dp
+from kivymd.app import MDApp
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.button import MDRaisedButton
+from kivy.lang import Builder
+from kivymd.uix.button import MDFloatingActionButton
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.graphics import Line
+from kivy.core.text import LabelBase
+from arabic_reshaper import reshape
+from bidi.algorithm import get_display
+from kivymd.uix.button import MDIconButton
 
+
+LabelBase.register(name='Arial', fn_regular='/usr/share/fonts/truetype/msttcorefonts/Arial.ttf')
+
+# Reshape the Arabic text
+reshaped_text = reshape('تسجيل')
+
+# Get the display text with correct RTL rendering
+bidi_text = get_display(reshaped_text)
+
+class PlanetButton(ButtonBehavior, Image):
+    border_width = 3.5  # Width of the border
+
+    def __init__(self, **kwargs):
+        self.text_label = Label(text=bidi_text, font_name='DejaVuSans', font_size='15sp')
+        super(PlanetButton, self).__init__(**kwargs)
+        self.always_release = True
+        self.keep_ratio = True
+        self.allow_stretch = True
+        self.source = './res/fdr.png'  # Correct path for your image
+
+        
+        self.add_widget(self.text_label)
+        
+        Clock.schedule_once(self.init_graphics, 0)
+
+    def init_graphics(self, *args):
+    # Safely access the canvas.before attribute
+        if getattr(self.canvas, 'before', None):
+            self.canvas.before.clear()
+            with self.canvas.before:
+                # Set the color for the border here. (r, g, b, a)
+                Color(0, 0, 0, 1)  # Black color for the border
+                # Drawing the border
+                self.border = Line(ellipse=(self.x, self.y, self.width, self.height), width=self.border_width)
+        self.update_text_label()
+
+    def update_text_label(self):
+        self.text_label.size = self.size
+        self.text_label.pos = self.pos
+
+    def on_size(self, *args):
+        self.init_graphics()
+        self.update_text_label()
+
+
+    def on_pos(self, *args):
+        self.init_graphics()
+        self.update_text_label()
+
+    def on_press(self):
+        # You can add visual effects on button press, like changing color or making it look pressed down
+        pass
+
+    def on_release(self):
+        # Reset visual effects when the button is released
+        pass
 
 
 class LabelB(Label):
@@ -70,8 +137,11 @@ class FirstScreen(Screen):
         donate_button.bind(on_press=self.go_to_second_screen)
         layout.add_widget(donate_button)
 
-
-        login_signup_button = Button(text="Login/Signup", size_hint=(0.5, None), height=dp(40))
+        login_signup_button = PlanetButton(
+            size_hint=(None, None),
+            size=(dp(56), dp(56)),  # Button size
+            pos_hint={'center_x': 0.1, 'center_y': 0.06}
+        )
         login_signup_button.bind(on_press=self.show_login_signup_options)
         layout.add_widget(login_signup_button)
 
@@ -80,8 +150,9 @@ class FirstScreen(Screen):
         # Set the height of the BoxLayout to the combined height of the buttons and spacing
         content.height = dp(100)  # Adjust the height based on your needs
 
-        login_btn = Button(text="Login", size_hint=(1, None), height=dp(40))
-        signup_btn = Button(text="Signup", size_hint=(1, None), height=dp(40))
+        login_btn = MDRaisedButton(text="Login", size_hint=(1, None), height=dp(40))
+        signup_btn = MDRaisedButton(text="Signup", size_hint=(1, None), height=dp(40))
+        
         content.add_widget(login_btn)
         content.add_widget(signup_btn)
 
@@ -367,7 +438,7 @@ class SecondScreen(Screen):
         dropdown.add_widget(open_btn)
 
         # Other options
-        for option in ['Option 1', 'Option 3']:
+        for option in []:
             btn = Button(text=option, size_hint_y=None, height=44)
             btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
                 dropdown, lambda: dropdown.select(btn.text)))
@@ -647,6 +718,10 @@ class BeneficiaryScreen(Screen):
         menu_button.bind(on_release=self.open_menu)
         self.add_widget(menu_button)
 
+    def go_to_first_screen(self):
+        # This method will switch the current screen to the FirstScreen
+        self.manager.current = 'first'
+
     def open_menu(self, button):
         # Create a new DropDown each time the menu is opened
         dropdown = DropDown()
@@ -722,23 +797,48 @@ class BeneficiaryScreen(Screen):
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super(LoginScreen, self).__init__(**kwargs)
-        layout = GridLayout(cols=1, spacing=10, padding=10)
+
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                allow_stretch=True,
+                keep_ratio=False)
+        self.add_widget(bg)
+
+        login_layout = FloatLayout()
+
+        # GridLayout for login content
+        grid_layout = GridLayout(cols=1, spacing=10, padding=10, size_hint=(None, None), size=(300, 200))
+        grid_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+
+        # Back arrow button
+        back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
+        back_button.bind(on_press=self.go_to_first_screen)
 
         # Username/Number input
-        self.username_input = TextInput(hint_text='Username or Number', multiline=False)
-        layout.add_widget(self.username_input)
+        self.username_input = MDTextField(hint_text='Username or Number', multiline=False)
+        grid_layout.add_widget(self.username_input)
 
         # Password input
-        self.password_input = TextInput(hint_text='Password', password=True, multiline=False)
-        layout.add_widget(self.password_input)
+        self.password_input = MDTextField(hint_text='Password', password=True, multiline=False)
+        grid_layout.add_widget(self.password_input)
 
         # Login button
-        login_button = Button(text='Login')
+        login_button = MDRaisedButton(text='Login', size_hint=(None, None), size=(150, 48))
         login_button.bind(on_press=self.login_user)
-        layout.add_widget(login_button)
+        
+        # Center the login button within the FloatLayout
+        login_button.pos_hint = {'center_x': 0.5, 'y': 0.1}
+        
+        # Add the GridLayout and the login button to the FloatLayout
+        login_layout.add_widget(grid_layout)
+        login_layout.add_widget(login_button)
+        login_layout.add_widget(back_button)
+
 
         # Add the layout to the screen
-        self.add_widget(layout)
+        self.add_widget(login_layout)
+
+    def go_to_first_screen(self, instance):
+        self.manager.current = 'first'
 
     def login_user(self, instance):
         username = self.username_input.text
@@ -766,31 +866,46 @@ class LoginScreen(Screen):
 class SignUpScreen(Screen):
     def __init__(self, **kwargs):
         super(SignUpScreen, self).__init__(**kwargs)
-        layout = GridLayout(cols=1, spacing=10, padding=10)
+
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                allow_stretch=True,
+                keep_ratio=False)
+        self.add_widget(bg)
+
+        layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        # Back arrow button
+        back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
+        back_button.bind(on_press=self.go_to_first_screen)
 
         # Username input
-        self.username_input = TextInput(hint_text='Username', multiline=False)
+        self.username_input = MDTextField(hint_text='Username', multiline=False)
         layout.add_widget(self.username_input)
 
         # Number input
-        self.number_input = TextInput(hint_text='phone number', multiline=False)
+        self.number_input = MDTextField(hint_text='phone number', multiline=False)
         layout.add_widget(self.number_input)
 
         # Password input
-        self.password_input = TextInput(hint_text='Password', password=True, multiline=False)
+        self.password_input = MDTextField(hint_text='Password', password=True, multiline=False)
         layout.add_widget(self.password_input)
 
         # Confirm Password input
-        self.confirm_password_input = TextInput(hint_text='Confirm Password', password=True, multiline=False)
+        self.confirm_password_input = MDTextField(hint_text='Confirm Password', password=True, multiline=False)
         layout.add_widget(self.confirm_password_input)
 
         # Signup button
-        signup_button = Button(text='Sign Up')
+        signup_button = MDRaisedButton(text='Sign Up', size_hint=(None, None), size=(150, 48))
         signup_button.bind(on_press=self.register_user)
         layout.add_widget(signup_button)
+        layout.add_widget(back_button)
+
 
         # Add the layout to the screen
         self.add_widget(layout)
+
+    def go_to_first_screen(self, instance):
+        self.manager.current = 'first'
 
     def register_user(self, instance):
         username = self.username_input.text
@@ -828,7 +943,7 @@ class SignUpScreen(Screen):
                       size_hint=(None, None), size=(300, 150))
         popup.open()
 
-class MyApp(App):
+class MyApp(MDApp):
 
     def build(self):
         sm = ScreenManager()
@@ -839,3 +954,4 @@ class MyApp(App):
         sm.add_widget(SignUpScreen(name='signup'))
         
         return sm
+    
