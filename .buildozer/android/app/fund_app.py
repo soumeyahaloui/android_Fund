@@ -33,7 +33,7 @@ from bidi.algorithm import get_display
 from kivymd.uix.button import MDIconButton
 
 
-LabelBase.register(name='Arial', fn_regular='/usr/share/fonts/truetype/msttcorefonts/Arial.ttf')
+# LabelBase.register(name='Arial', fn_regular='/usr/share/fonts/truetype/msttcorefonts/Arial.ttf')
 
 # Reshape the Arabic text
 reshaped_text = reshape('تسجيل')
