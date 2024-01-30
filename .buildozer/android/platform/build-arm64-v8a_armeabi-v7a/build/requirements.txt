@@ -1,3 +1,8 @@
 arabic_reshaper
+certifi
+chardet
+idna
 kivymd
 python-bidi
+requests
+urllib3
