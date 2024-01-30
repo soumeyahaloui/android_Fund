@@ -32,9 +32,6 @@ from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from kivymd.uix.button import MDIconButton
 
-
-# LabelBase.register(name='Arial', fn_regular='/usr/share/fonts/truetype/msttcorefonts/Arial.ttf')
-
 # Reshape the Arabic text
 reshaped_text = reshape('تسجيل')
 
@@ -814,11 +811,11 @@ class LoginScreen(Screen):
         back_button.bind(on_press=self.go_to_first_screen)
 
         # Username/Number input
-        self.username_input = MDTextField(hint_text='Username or Number', multiline=False)
+        self.username_input = CustomMDTextField(hint_text='Username or Number', multiline=False)
         grid_layout.add_widget(self.username_input)
 
         # Password input
-        self.password_input = MDTextField(hint_text='Password', password=True, multiline=False)
+        self.password_input = CustomMDTextField(hint_text='Password', password=True, multiline=False)
         grid_layout.add_widget(self.password_input)
 
         # Login button
@@ -879,19 +876,19 @@ class SignUpScreen(Screen):
         back_button.bind(on_press=self.go_to_first_screen)
 
         # Username input
-        self.username_input = MDTextField(hint_text='Username', multiline=False)
+        self.username_input = CustomMDTextField(hint_text='Username', multiline=False)
         layout.add_widget(self.username_input)
 
         # Number input
-        self.number_input = MDTextField(hint_text='phone number', multiline=False)
+        self.number_input = CustomMDTextField(hint_text='phone number', multiline=False)
         layout.add_widget(self.number_input)
 
         # Password input
-        self.password_input = MDTextField(hint_text='Password', password=True, multiline=False)
+        self.password_input = CustomMDTextField(hint_text='Password', password=True, multiline=False)
         layout.add_widget(self.password_input)
 
         # Confirm Password input
-        self.confirm_password_input = MDTextField(hint_text='Confirm Password', password=True, multiline=False)
+        self.confirm_password_input = CustomMDTextField(hint_text='Confirm Password', password=True, multiline=False)
         layout.add_widget(self.confirm_password_input)
 
         # Signup button
@@ -942,6 +939,21 @@ class SignUpScreen(Screen):
                       content=popup_content,
                       size_hint=(None, None), size=(300, 150))
         popup.open()
+
+class CustomMDTextField(MDTextField):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        with self.canvas.before:
+            self.bg_color = Color(rgba=(1, 1, 1, 0.5))  # Semi-transparent white
+            self.bg_rect = RoundedRectangle(size=self.size, pos=self.pos, radius=[(15, 15)])
+            self.text_color = Color(0, 0, 0, 1)  # Black text color
+
+        self.bind(pos=self.update_bg, size=self.update_bg)
+
+    def update_bg(self, *args):
+        self.bg_rect.pos = self.pos
+        self.bg_rect.size = self.size
+
 
 class MyApp(MDApp):
 
