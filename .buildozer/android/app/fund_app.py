@@ -31,6 +31,13 @@ from kivy.core.text import LabelBase
 from arabic_reshaper import reshape
 from bidi.algorithm import get_display
 from kivymd.uix.button import MDIconButton
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.button import MDFlatButton
+from kivymd.icon_definitions import md_icons
+from kivymd.uix.list import OneLineIconListItem
+import json
+
+
 
 # Reshape the Arabic text
 reshaped_text = reshape('تسجيل')
@@ -340,9 +347,7 @@ class SecondScreen(Screen):
 
             framed_layout.add_widget(image_layout)
             layout.add_widget(framed_layout)
-
         
-
         # Menu button at the bottom
         menu_button = Button(
             text='Menu',
@@ -366,6 +371,33 @@ class SecondScreen(Screen):
             pos_hint={'center_x': 0.1, 'center_y': 0.04}
         )
         self.add_widget(self.planet_button)
+        self.planet_button.bind(on_release=self.show_logout_option)
+
+    
+    def show_logout_option(self, instance):
+        logout_menu_items = [
+            {
+                'text': 'Log Out',
+                'viewclass': 'OneLineListItem',
+                'on_release': lambda x='Log Out': self.logout_user(x)
+            }
+        ]
+
+        self.logout_menu = MDDropdownMenu(
+            caller=self.planet_button,
+            items=logout_menu_items,
+            position="auto",
+            width_mult=4,
+        )
+
+        self.logout_menu.open()
+
+    def logout_user(self, text_item):
+        self.logout_menu.dismiss()
+        if text_item == 'Log Out':
+            # Call the method to handle the log out logic
+            app = MDApp.get_running_app()
+            app.logout_user()
 
     def go_to_first_screen(self):
         # Method to switch to FirstScreen
@@ -423,38 +455,45 @@ class SecondScreen(Screen):
 
 
     def open_menu(self, button):
-        # Create a new DropDown each time the menu is opened
-        dropdown = DropDown()
+        menu_items = [
+            {
+                'text': 'Beneficiary',
+                'viewclass': 'OneLineIconListItem',  # Using icon list item
+                'icon': 'account-box',  # Material icon name
+                'on_release': lambda x='Beneficiary': self.menu_callback(x)
+            },
+            {
+                'text': 'Main',
+                'viewclass': 'OneLineIconListItem',
+                'icon': 'home',
+                'on_release': lambda x='Main': self.menu_callback(x)
+            },
+            # Add more items as needed
+        ]
 
-        # Beneficiary button
-        beneficiary_btn = Button(
-            text='Beneficiary', size_hint_y=None, height=44)
-        beneficiary_btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
-            dropdown, self.go_to_beneficiary))
 
-        dropdown.add_widget(beneficiary_btn)
+        # Create MDDropdownMenu with icon and style customization
+        self.menu = MDDropdownMenu(
+            caller=button,  # The button that will open the menu
+            items=menu_items,
+            position="auto",
+            width_mult=4,
+        )
 
-        # Open button (previously Option 2)
-        open_btn = Button(text='Open', size_hint_y=None, height=44)
-        open_btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
-            dropdown, self.go_to_first_screen))
+        self.menu.open()
 
-        dropdown.add_widget(open_btn)
-
-        # Other options
-        for option in []:
-            btn = Button(text=option, size_hint_y=None, height=44)
-            btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
-                dropdown, lambda: dropdown.select(btn.text)))
-            dropdown.add_widget(btn)
-
-        # Open the dropdown
-        dropdown.open(button)
+    def menu_callback(self, text_item):
+        if text_item == 'Beneficiary':
+            self.go_to_beneficiary()
+        elif text_item == 'Main':
+            self.go_to_first_screen()
+        # Handle other menu items here
+        self.menu.dismiss()
 
     def close_dropdown_and_navigate(self, dropdown, navigation_action):
-        """Close dropdown and perform the specified navigation action."""
-        dropdown.dismiss()
-        navigation_action()
+            """Close dropdown and perform the specified navigation action."""
+            dropdown.dismiss()
+            navigation_action()
 
     def go_to_beneficiary(self):
         # Method to switch to BeneficiaryScreen
@@ -729,45 +768,50 @@ class BeneficiaryScreen(Screen):
         self.manager.current = 'first'
 
     def open_menu(self, button):
-        # Create a new DropDown each time the menu is opened
-        dropdown = DropDown()
+        menu_items = [
+            {
+                'text': 'Main',
+                'viewclass': 'OneLineIconListItem',
+                'icon': 'home',
+                'on_release': lambda x='Main': self.menu_callback(x)
+            },
+            {
+                'text': 'Families',
+                'viewclass': 'OneLineIconListItem',
+                'icon': 'page-next-outline',  # Replace with a suitable icon
+                'on_release': lambda x='Second': self.menu_callback(x)
+            },
+            # Add more items as needed
+        ]
 
-        # Option 1: Main
-        main_btn = Button(
-            text='Main',
-            size_hint_y=None,
-            height=44
+        self.menu = MDDropdownMenu(
+            caller=button,
+            items=menu_items,
+            position="auto",
+            width_mult=4,
         )
-        main_btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
-            dropdown, lambda: self.go_to_main_screen(btn)))
 
-        dropdown.add_widget(main_btn)
-
-        # Open button (previously Option 2)
-        open_btn = Button(text='Open', size_hint_y=None, height=44)
-        open_btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
-            dropdown, self.go_to_first_screen))
-
-        dropdown.add_widget(open_btn)
-
-        # Other options
-        for option in ['Option 2', 'Option 3']:
-            btn = Button(text=option, size_hint_y=None, height=44)
-            btn.bind(on_release=lambda btn: self.close_dropdown_and_navigate(
-                dropdown, lambda: dropdown.select(btn.text)))
-
-            dropdown.add_widget(btn)
-
-        # Open the dropdown
-        dropdown.open(button)
+        self.menu.open()
 
     def close_dropdown_and_navigate(self, dropdown, navigation_action):
         """Close dropdown and perform the specified navigation action."""
         dropdown.dismiss()
         navigation_action()
 
-    def go_to_main_screen(self, button):
+    def menu_callback(self, text_item):
+        if text_item == 'Main':
+            self.go_to_main_screen()
+        elif text_item == 'Second':
+            self.go_to_second_screen()
+        # Handle other menu items here
+        self.menu.dismiss()
+
+    def go_to_main_screen(self):
         # Method to switch to SecondScreen
+        self.manager.current = 'first'
+
+    def go_to_second_screen(self):
+        # Logic to navigate to the Second screen
         self.manager.current = 'second'
 
     def add_completed_set(self, completed_set):
@@ -863,7 +907,11 @@ class LoginScreen(Screen):
         # Update the planet button on the SecondScreen
         self.manager.get_screen('second').update_planet_button(first_initial)
         self.manager.current = 'second'  # Navigate to SecondScreen
+        self.save_login_state(True)
 
+    def save_login_state(self, logged_in):
+        with open('login_state.json', 'w') as file:
+            json.dump({'logged_in': logged_in}, file)
 
     def on_login_failure(self, request, result):
         # Handle login failure
@@ -966,16 +1014,48 @@ class CustomMDTextField(MDTextField):
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
 
+class SomeScreen(Screen):
+    # ... existing code ...
+
+    def log_out(self):
+        # ... log out logic ...
+        app = App.get_running_app()
+        app.save_login_state(False)
+        app.sm.current = 'login'
 
 class MyApp(MDApp):
 
     def build(self):
-        sm = ScreenManager()
-        sm.add_widget(FirstScreen(name='first'))
-        sm.add_widget(SecondScreen(name='second'))
-        sm.add_widget(BeneficiaryScreen(name='beneficiary'))
-        sm.add_widget(LoginScreen(name='login'))
-        sm.add_widget(SignUpScreen(name='signup'))
+        self.sm = ScreenManager()
+
+        # Add screens to the ScreenManager
+        self.sm.add_widget(FirstScreen(name='first'))
+        self.sm.add_widget(SecondScreen(name='second'))
+        self.sm.add_widget(BeneficiaryScreen(name='beneficiary'))
+        self.sm.add_widget(LoginScreen(name='login'))
+        self.sm.add_widget(SignUpScreen(name='signup'))
+
+        if self.is_logged_in():
+            self.sm.current = 'second'  # or whichever screen you want to show after login
+        else:
+            self.sm.current = 'first'
+
+        return self.sm
+
+    def is_logged_in(self):
+        try:
+            with open('login_state.json', 'r') as file:
+                state = json.load(file)
+                return state.get('logged_in', False)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return False
         
-        return sm
-    
+    def logout_user(self):
+        # Update the login state to logged out
+        self.save_login_state(False)
+        # Redirect to the login screen
+        self.sm.current = 'login'
+
+    def save_login_state(self, logged_in):
+        with open('login_state.json', 'w') as file:
+            json.dump({'logged_in': logged_in}, file)
