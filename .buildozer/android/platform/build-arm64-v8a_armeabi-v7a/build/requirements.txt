@@ -1,5 +1,3 @@
-certifi
-chardet
-idna
-requests
-urllib3
+arabic_reshaper
+kivymd
+python-bidi
