@@ -36,8 +36,10 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.icon_definitions import md_icons
 from kivymd.uix.list import OneLineIconListItem
 import json
+from kivymd.uix.dialog import MDDialog
 
 
+alpha_value = 0.5  # 50% transparency
 
 # Reshape the Arabic text
 reshaped_text = reshape('تسجيل')
@@ -371,10 +373,66 @@ class SecondScreen(Screen):
             pos_hint={'center_x': 0.1, 'center_y': 0.04}
         )
         self.add_widget(self.planet_button)
-        self.planet_button.bind(on_release=self.show_logout_option)
+        self.planet_button.bind(on_release=self.show_user_options)
 
     
+    def show_user_options(self, instance):
+        app = MDApp.get_running_app()
+        if app.is_logged_in():
+            self.show_logout_option(instance)
+        else:
+            self.show_login_signup_options(instance)
+
     def show_logout_option(self, instance):
+        logout_menu_items = [
+            {
+                'text': 'Log Out',
+                'viewclass': 'OneLineListItem',
+                'on_release': lambda x='Log Out': self.logout_user(x)
+            }
+        ]
+
+        self.logout_menu = MDDropdownMenu(
+            caller=self.planet_button,
+            items=logout_menu_items,
+            position="auto",
+            width_mult=4,
+        )
+
+        self.logout_menu.open()
+
+    def logout_user(self, text_item):
+        self.logout_menu.dismiss()
+        if text_item == 'Log Out':
+            # Logic to handle user logout
+            app = MDApp.get_running_app()
+            app.logout_user()
+
+    def show_login_signup_options(self, instance):
+        content = BoxLayout(orientation='vertical', padding=10, spacing=10, size_hint_y=None)
+        # Set the height of the BoxLayout to the combined height of the buttons and spacing
+        content.height = dp(100)  # Adjust the height based on your needs
+
+        login_btn = MDRaisedButton(text="Login", size_hint=(1, None), height=dp(40))
+        signup_btn = MDRaisedButton(text="Signup", size_hint=(1, None), height=dp(40))
+        
+        content.add_widget(login_btn)
+        content.add_widget(signup_btn)
+
+        popup = Popup(content=content, size_hint=(None, None), size=(300, content.height), title_size=0)
+        login_btn.bind(on_press=lambda x: self.go_to_login(popup))
+        signup_btn.bind(on_press=lambda x: self.go_to_signup(popup))
+        popup.open()
+
+    def go_to_login(self, popup):
+        popup.dismiss()
+        self.manager.current = 'login'
+
+    def go_to_signup(self, popup):
+        popup.dismiss()
+        self.manager.current = 'signup'
+
+    def is_logged_in(self):
         logout_menu_items = [
             {
                 'text': 'Log Out',
@@ -501,11 +559,29 @@ class SecondScreen(Screen):
 
     def show_confirmation_from_input(self, custom_input, counter_key):
         try:
-            amount = float(custom_input.text)
-            self.show_confirmation(amount, counter_key, custom_input)
-
+            amount_text = custom_input.text  # Get text from custom_input
+            amount = float(amount_text)  # Convert the text to float
         except ValueError:
-            self.show_error_popup("Please enter a valid number.")
+            self.show_error_popup(f"Invalid amount: {amount}Please enter a valid number.")
+            return
+        
+        self.show_confirmation(amount, counter_key, custom_input)
+
+        dialog = MDDialog(
+        title="Confirm Donation",
+        text=f"Are you sure you want to donate {amount}?",
+        buttons=[
+            MDFlatButton(
+                text="CANCEL",
+                on_release=lambda _: dialog.dismiss()  # Use lambda to dismiss the dialog
+            ),
+            MDFlatButton(
+                text="DONATE",
+                on_release=lambda _: self.confirm_donation(amount, counter_key, dialog)
+            )
+        ],
+    )
+        
 
     def show_error_popup(self, message):
         content = Label(text=message)
@@ -514,9 +590,10 @@ class SecondScreen(Screen):
                       size_hint=(None, None), size=(400, 200))
         popup.open()
 
+    
     def add_black_frame(self, widget):
         with widget.canvas.before:
-            Color(0, 0, 0, 1)  # Black color for the frame
+            Color(0.8667, 0.6157, 0.6196, alpha_value)  # Black color for the frame
             widget.frame = Rectangle(pos=widget.pos, size=widget.size)
         widget.bind(pos=self.update_frame, size=self.update_frame)
 
@@ -549,31 +626,18 @@ class SecondScreen(Screen):
             return
 
         print(f"Showing confirmation for {amount}")  # Debug print
-        content = GridLayout(cols=1, spacing=10, size_hint_y=None)
-        content.add_widget(
-            Label(text=f"Are you sure you want to donate {amount}?"))
+        
+        dialog = MDDialog(
+        title="Confirm Donation",
+        text=f"Are you sure you want to donate {amount}?",
+        buttons=[
+            MDFlatButton(text="CANCEL", on_release=lambda x: dialog.dismiss()),
+            MDFlatButton(text="DONATE", on_release=lambda x: self.confirm_donation(amount, counter_key, dialog))
+        ],
+    )
+        dialog.open()
 
-
-        # Buttons for confirmation
-        btn_layout = GridLayout(cols=2, spacing=10, size_hint_y=None)
-        yes_btn = Button(text="Yes")
-        no_btn = Button(text="No")
-        btn_layout.add_widget(yes_btn)
-        btn_layout.add_widget(no_btn)
-        content.add_widget(btn_layout)
-
-        # Popup instance
-        popup = Popup(title="Confirm Donation",
-                      content=content,
-                      size_hint=(None, None), size=(400, 200))
-
-        # Binding buttons to actions
-        yes_btn.bind(
-            on_press=lambda *args: self.confirm_donation(amount, counter_key, popup))
-        no_btn.bind(on_press=popup.dismiss)
-        popup.open()
-
-    def confirm_donation(self, amount, counter_key, popup):
+    def confirm_donation(self, amount, counter_key, dialog):
         # Convert amount to float for consistency
         amount = float(amount)
 
@@ -622,7 +686,7 @@ class SecondScreen(Screen):
         if custom_amount_input:
             custom_amount_input.text = ''  # Reset to empty
 
-        popup.dismiss()
+        dialog.dismiss()
 
     def mark_frame_as_available(self, counter_key):
         # Mark the frame associated with counter_key as available
@@ -705,11 +769,12 @@ class SecondScreen(Screen):
             return 0
 
     def show_thank_you_popup(self):
-        content = Label(text="Thank you, the amount is completed")
-        popup = Popup(title="Thank You",
-                      content=content,
-                      size_hint=(None, None), size=(400, 200))
-        popup.open()
+        dialog = MDDialog(
+        title="Thank You",
+        text="Thank you, the amount is completed",
+        buttons=[MDFlatButton(text="CLOSE", on_release=lambda x: dialog.dismiss())],
+    )
+        dialog.open()
 
     def go_to_beneficiary(self):
         # Method to switch to BeneficiaryScreen
@@ -728,6 +793,10 @@ class SecondScreen(Screen):
     def update_planet_button(self, initial):
     # Update the text label inside the planet button with the user's first initial
         self.planet_button.text_label.text = initial
+
+    def reset_planet_button_label(self):
+        # Reset the text label of the planet button to its default value
+        self.planet_button.text_label.text = bidi_text  # Replace "Default" with your default text
 
 class BeneficiaryScreen(Screen):
     def __init__(self, **kwargs):
@@ -1053,6 +1122,9 @@ class MyApp(MDApp):
     def logout_user(self):
         # Update the login state to logged out
         self.save_login_state(False)
+        # Reset the planet button text label in SecondScreen
+        second_screen = self.sm.get_screen('second')
+        second_screen.reset_planet_button_label()
         # Redirect to the login screen
         self.sm.current = 'login'
 
