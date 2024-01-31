@@ -53,13 +53,11 @@ class PlanetButton(ButtonBehavior, Image):
     def __init__(self, **kwargs):
         self.text_label = Label(text=bidi_text, font_name='DejaVuSans', font_size='15sp')
         super(PlanetButton, self).__init__(**kwargs)
+        self.add_widget(self.text_label)
         self.always_release = True
         self.keep_ratio = True
         self.allow_stretch = True
         self.source = './res/fdr.png'  # Correct path for your image
-
-        
-        self.add_widget(self.text_label)
         
         Clock.schedule_once(self.init_graphics, 0)
 
@@ -77,6 +75,8 @@ class PlanetButton(ButtonBehavior, Image):
     def update_text_label(self):
         self.text_label.size = self.size
         self.text_label.pos = self.pos
+        self.text_label.text = bidi_text
+
 
     def on_size(self, *args):
         self.init_graphics()
@@ -784,7 +784,7 @@ class SecondScreen(Screen):
         self.last_fetched_family_id += 1  # Increment to fetch the next family
         next_family_id = self.last_fetched_family_id
 
-        base_url = 'https://fund-flask.onrender.com/get_data'  # Update the URL here
+        base_url = 'https://fund-flask.onrender.com/'  # Update the URL here
 
 
         # Use the base URL in the UrlRequest

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Goodly</string>
-    <string name="private_version">e23b19a5a9ea2adaa73e26a1461b5996b14340c5</string>
+    <string name="private_version">23a3b8a7198a44d45cc611d6cccd03ac38907381</string>
     <string name="presplash_color">#000000</string>
     <string name="urlScheme">kivy</string>
 </resources>
