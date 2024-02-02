@@ -571,7 +571,6 @@ class SecondScreen(Screen):
 
         
         if isinstance(result, list) and len(result) > 0:
-            
             self.update_ui_with_data(result)
         else:
             logging.error("Data received is not in the expected format or is empty.")
