@@ -1,117 +1,13 @@
 alpha_value = 0.5  
-
-
 reshaped_text = reshape('تسجيل')
-
-
 bidi_text = get_display(reshaped_text)
 
-class PlanetButton(ButtonBehavior, Image):
-    border_width = 3.5  
 
-    def __init__(self, **kwargs):
-        self.text_label = Label(text=bidi_text, font_name='DejaVuSans', font_size='15sp')
-        super(PlanetButton, self).__init__(**kwargs)
-        self.add_widget(self.text_label)
-        self.always_release = True
-        self.keep_ratio = True
-        self.allow_stretch = True
-        self.source = './res/fdr.png'  
-        
-        Clock.schedule_once(self.init_graphics, 0)
-
-    def init_graphics(self, *args):
-    
-        if getattr(self.canvas, 'before', None):
-            self.canvas.before.clear()
-            with self.canvas.before:
-                
-                Color(0, 0, 0, 1)  
-                
-                self.border = Line(ellipse=(self.x, self.y, self.width, self.height), width=self.border_width)
-        self.update_text_label()
-
-    def update_text_label(self):
-        self.text_label.size = self.size
-        self.text_label.pos = self.pos
-        self.text_label.text = ''
-
-
-    def on_size(self, *args):
-        self.init_graphics()
-        self.update_text_label()
-
-
-    def on_pos(self, *args):
-        self.init_graphics()
-        self.update_text_label()
-
-    def on_press(self):
-        
-        pass
-
-    def on_release(self):
-        
-        pass
-
-
-class LabelB(Label):
-    def __init__(self, **kwargs):
-        self.bg_color = kwargs.pop(
-            'bg_color', (1, 1, 1, 1))  
-        super(LabelB, self).__init__(**kwargs)
-        with self.canvas.before:
-            Color(*self.bg_color)
-            self.rect = Rectangle(pos=self.pos, size=self.size)
-        self.bind(pos=self.update_rect, size=self.update_rect)
-
-    def update_rect(self, *args):
-        self.rect.pos = self.pos
-        self.rect.size = self.size
 
 
 class FirstScreen(Screen):
     def __init__(self, **kwargs):
         super(FirstScreen, self).__init__(**kwargs)
-
-        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundra.png?v=1706453653572',
-                allow_stretch=True,
-                keep_ratio=False)
-        self.add_widget(bg)
-
-        
-        layout = FloatLayout()
-        self.add_widget(layout)
-
-     
-        donate_button = Button(
-            text="Donate",
-            font_size="20sp",
-            background_color=(0.2, 0.5, 0.8, 1),  
-            color=(1, 1, 1, 1),  
-            size_hint=(None, None),
-            size=(200, 60),
-            pos_hint={'center_x': 0.5, 'center_y': 0.2}
-        )
-
-        
-        donate_button.size_hint = (0.5, None)
-        donate_button.height = '48dp'
-        donate_button.pos_hint = {'center_x': 0.5, 'y': 0.1}
-
-        donate_button.bind(on_press=self.go_to_second_screen)
-        layout.add_widget(donate_button)
-
-        login_signup_button = PlanetButton(
-            size_hint=(None, None),
-            size=(dp(56), dp(56)),  
-            pos_hint={'center_x': 0.1, 'center_y': 0.06}
-        )
-        login_signup_button.bind(on_press=self.show_user_options)
-        layout.add_widget(login_signup_button)
-
-        self.planet_button = login_signup_button
-
 
     def show_user_options(self, instance):
         app = MDApp.get_running_app()
@@ -194,7 +90,7 @@ class FirstScreen(Screen):
             app = MDApp.get_running_app()
             app.logout_user()
 
-    def show_login_signup_options(self, instance):
+    def show_login_signup_options(self):
         content = BoxLayout(orientation='vertical', padding=10, spacing=10, size_hint_y=None)
         
         content.height = dp(100)  
@@ -220,8 +116,21 @@ class FirstScreen(Screen):
         self.manager.current = 'signup'
 
     def go_to_second_screen(self, instance):
-        self.manager.current = 'second'
+        app = MDApp.get_running_app()
 
+        # Check if the user is logged in before navigating to the second screen
+        if app.is_logged_in():
+            self.manager.current = 'second'
+        else:
+            self.show_login_signup_options()
+
+    def is_logged_in(self):
+        try:
+            with open('login_state.json', 'r') as file:
+                state = json.load(file)
+                return state.get('logged_in', False)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return False
 
 class SecondScreen(Screen):
     def __init__(self, **kwargs):
@@ -238,178 +147,6 @@ class SecondScreen(Screen):
         self.next_index = 1
         self.last_fetched_family_id = 4  
         
-        self.frame_data_map = {i: i for i in range(1, 5)}
-
-        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
-                allow_stretch=True,
-                keep_ratio=False)
-        self.add_widget(bg)
-
-        self.cols = 2  
-        self.rows = 2  
-        
-        
-        screen_width, screen_height = Window.size
-        column_width = screen_width / self.cols
-        row_height = screen_height / self.rows
-        
-
-        layout = GridLayout(cols=self.cols, spacing=dp(10), padding=dp(10), size_hint=(1, None))
-        layout.bind(minimum_height=layout.setter('height'))
-        self.add_widget(layout)
-
-        
-        layout.spacing = dp(2)
-        layout.padding = dp(2)
-
-
-        
-        for i in range(1, 5):
-            self.counters[f'counter_{i}'] = 0  
-
-            framed_layout = FloatLayout(size_hint=(None, None), size=(
-                column_width, row_height))  
-            
-            self.add_black_frame(framed_layout)
-
-            image_layout = FloatLayout(size_hint=(1, 1), pos_hint={
-                                       'center_x': 0.5, 'center_y': 0.5})
-
-            top_text = LabelB(
-                text='',
-                bg_color=(0.2, 0.5, 0.8, 1),  
-                color=(1, 1, 1, 1),  
-                font_size='20sp',  
-                bold=True,  
-                size_hint=(None, None),
-                size=(200, 50),
-                pos_hint={'center_x': 0.5, 'top': 1},
-                halign="center",  
-                valign="middle"  
-            )
-
-            
-            top_text.size_hint = (0.8, None)  
-            top_text.height = dp(30)  
-            top_text.pos_hint = {'center_x': 0.5, 'top': 0.99}  
-
-            
-            top_text.bind(size=top_text.setter('text_size'))
-            self.widget_ids[f'top_text_{i}'] = top_text  
-            image_layout.add_widget(top_text)
-
-            
-            image = AsyncImage(source='', size_hint=(0.8, 0.3), allow_stretch=True)
-            image.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
-            self.widget_ids[f'image_{i}'] = image  
-            image_layout.add_widget(image)
-
-            
-            image.size_hint = (0.8, 0.3)  
-            image.allow_stretch = True  
-            image.pos_hint = {'center_x': 0.5, 'center_y': 0.7}  
-
-            
-            button_container = GridLayout(rows=1, size_hint=(None, None),size=(200, 50),  
-                pos_hint={'center_x': 0.5, 'y': 0.27}
-            )
-            
-            button_container.size_hint = (0.8, None)
-            button_container.height = dp(40)
-            button_container.padding = [dp(2)] * 4  
-
-            custom_amount_input = TextInput(
-                hint_text='Enter Num',
-                
-                hint_text_color=[0.5, 0.5, 0.5, 1],
-                multiline=False,
-                size_hint=(None, None),
-                size=(140, 50),
-                pos_hint={'center_x': 0.4, 'y': 0.2}
-            )
-
-            for amount in ["1", "5", "50", "100"]:
-                button = Button(text=amount, size_hint=(None, 1), width=dp(48))  
-                button.bind(on_press=self.create_button_callback(amount, f'counter_{i}', custom_amount_input))
-                button_container.add_widget(button)
-
-            
-            for button in button_container.children:
-                button.size_hint_x = 1 / len(button_container.children)
-                
-            
-            button.size_hint = (1 / len(button_container.children), 1)  
-
-            
-          
-            
-            custom_amount_input.size_hint = (0.6, None)
-            custom_amount_input.height = dp(40)  
-            custom_amount_input.pos_hint = {'center_x': 0.4, 'y': 0.4}
-
-            self.widget_dict[f'custom_amount_{i}'] = custom_amount_input
-            image_layout.add_widget(custom_amount_input)
-
-            
-            submit_button = Button(
-                text="Sub",
-                size_hint=(None, None),
-                
-                size=(60, 50), pos_hint={'x': custom_amount_input.pos_hint['center_x'] + 0.35, 'y': 0.2}
-
-            )
-            
-            submit_button.size_hint = (0.2, None)
-            submit_button.height = dp(40)  
-            submit_button.pos_hint = {'right': custom_amount_input.pos_hint['center_x'] + 0.5, 'y': 0.4}
-            
-            submit_button.bind(on_press=lambda instance, x=custom_amount_input, counter_key=f'counter_{i}':
-                               self.show_confirmation_from_input(x, counter_key))
-
-            image_layout.add_widget(submit_button)
-
-            
-            
-            
-
-            image_layout.add_widget(button_container)
-            
-            bottom_text = Label(
-                text=f'Bottom {i}',
-                size_hint=(None, None),
-                size=(200, 50),
-                pos_hint={'center_x': 0.5, 'y': 0}
-            )
-            
-            
-            bottom_text.size_hint = (0.8, None)
-            bottom_text.height = dp(30)  
-            bottom_text.pos_hint = {'center_x': 0.5, 'y': 0.17}
-
-            self.add_frame(bottom_text)
-            image_layout.add_widget(bottom_text)
-            self.widget_dict[f'bottom_text_{i}'] = bottom_text
-
-            framed_layout.add_widget(image_layout)
-            layout.add_widget(framed_layout)
-        
-        
-        menu_button = Button(
-            text='Menu',
-            size_hint=(None, None),
-            size=(100, 50),
-            pos_hint={'center_x': 0.5, 'y': 0}
-        )
-
-        
-        menu_button.size_hint = (0.5, None)
-        menu_button.height = dp(40)  
-        menu_button.pos_hint = {'center_x': 0.5, 'bottom': 1}
-
-        menu_button.bind(on_release=self.open_menu)
-        self.add_widget(menu_button)
-        
-        
         self.planet_button = PlanetButton(
             size_hint=(None, None),
             size=(dp(40), dp(40)),  
@@ -417,7 +154,6 @@ class SecondScreen(Screen):
         )
         self.add_widget(self.planet_button)
         self.planet_button.bind(on_release=self.show_user_options)
-
     
     def show_user_options(self, instance):
         app = MDApp.get_running_app()
@@ -428,6 +164,11 @@ class SecondScreen(Screen):
 
     def show_logout_option(self, instance):
         logout_menu_items = [
+            {
+            'text': 'Profile',  # New option for the logged-in user
+            'viewclass': 'OneLineListItem',
+            'on_release': lambda x='Profile': self.view_profile(x)
+        },
             {
                 'text': 'Log Out',
                 'viewclass': 'OneLineListItem',
@@ -443,6 +184,13 @@ class SecondScreen(Screen):
         )
 
         self.logout_menu.open()
+
+    def view_profile(self, text_item):
+        self.logout_menu.dismiss()
+        if text_item == 'Profile':
+            # Add the logic to navigate to the profile screen or perform any profile-related actions
+            self.manager.current = 'profile'
+
 
     def logout_user(self, text_item):
         self.logout_menu.dismiss()
@@ -756,6 +504,31 @@ class SecondScreen(Screen):
 
         self.counters[counter_key] = 0
 
+    def update_frame_with_new_data(self, counter_key, data):
+
+        image_widget = self.widget_ids.get(f'image_{counter_key[-1]}')
+        top_text_widget = self.widget_ids.get(f'top_text_{counter_key[-1]}')
+        bottom_text_widget = self.widget_dict.get(
+            counter_key.replace('counter', 'bottom_text'))
+        custom_amount_input = self.widget_dict.get(
+            f'custom_amount_{counter_key[-1]}')
+
+        if image_widget:
+            image_widget.source = data['Image']
+
+        if top_text_widget:
+            top_text_widget.text = f"Goal: {data['Amount']}"
+
+        if bottom_text_widget:
+            bottom_text_widget.text = 'Total: 0.00'
+
+        if custom_amount_input:
+            custom_amount_input.text = ''
+
+        self.counters[counter_key] = 0
+
+        print(f"New family set fetched for frame {counter_key}: {data}")
+
     def on_request_error(self, request, error):
         logging.error(f"Request to Flask server error: {error}")
         traceback.print_exc()
@@ -798,43 +571,17 @@ class SecondScreen(Screen):
         self.planet_button.text_label.text = initial
 
     def reset_planet_button_label(self):
-        self.planet_button.text_label.text = ''  
-
-class BeneficiaryScreen(Screen):
-    def __init__(self, **kwargs):
-        super(BeneficiaryScreen, self).__init__(**kwargs)
-
-
-        scroll_view = ScrollView(size_hint=(
-            1, None), size=(Window.width, Window.height))
-        self.layout = GridLayout(
-            cols=2, spacing=10, padding=10, size_hint_y=None)
-        self.layout.bind(minimum_height=self.layout.setter('height'))
-        scroll_view.add_widget(self.layout)
-        self.add_widget(scroll_view)
-
-        menu_button = Button(text='Menu', size_hint=(None, None), size=(
-            100, 50), pos_hint={'center_x': 0.5, 'y': 0})
-        menu_button.bind(on_release=self.open_menu)
-        self.add_widget(menu_button)
-
-        menu_button = Button(
-            text='Menu',
-            size_hint=(None, None),
-            size=(100, 50),
-            pos_hint={'center_x': 0.5, 'y': 0}
-        )
-        menu_button.bind(on_release=self.open_menu)
-        self.add_widget(menu_button)
-
-    def go_to_first_screen(self):
-        self.manager.current = 'first'
+        self.planet_button.text_label.text = ''
 
 
 class LoginScreen(Screen):
     def __init__(self, **kwargs):
         super(LoginScreen, self).__init__(**kwargs)
 
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                allow_stretch=True,
+                keep_ratio=False)
+        self.add_widget(bg)
 
         login_layout = FloatLayout()
 
@@ -887,20 +634,118 @@ class LoginScreen(Screen):
     def on_login_failure(self, request, result):
         print("Login failed:", result)
 
-    
-class CustomMDTextField(MDTextField):
+class SignUpScreen(Screen):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        with self.canvas.before:
-            self.bg_color = Color(rgba=(1, 1, 1, 0.5))  
-            self.bg_rect = RoundedRectangle(size=self.size, pos=self.pos, radius=[(15, 15)])
-            self.text_color = Color(0, 0, 0, 1)  
+        super(SignUpScreen, self).__init__(**kwargs)
 
-        self.bind(pos=self.update_bg, size=self.update_bg)
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                allow_stretch=True,
+                keep_ratio=False)
+        self.add_widget(bg)
 
-    def update_bg(self, *args):
-        self.bg_rect.pos = self.pos
-        self.bg_rect.size = self.size
+        layout = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
+        back_button.bind(on_press=self.go_to_first_screen)
+
+        self.username_input = CustomMDTextField(hint_text='Username', multiline=False)
+        layout.add_widget(self.username_input)
+
+        self.number_input = CustomMDTextField(hint_text='phone number', multiline=False)
+        layout.add_widget(self.number_input)
+
+        self.password_input = CustomMDTextField(hint_text='Password', password=True, multiline=False)
+        layout.add_widget(self.password_input)
+
+        self.confirm_password_input = CustomMDTextField(hint_text='Confirm Password', password=True, multiline=False)
+        layout.add_widget(self.confirm_password_input)
+
+        signup_button = MDRaisedButton(text='Sign Up', size_hint=(None, None), size=(150, 48))
+        signup_button.bind(on_press=self.register_user)
+        layout.add_widget(signup_button)
+        layout.add_widget(back_button)
+
+        self.add_widget(layout)
+
+    def go_to_first_screen(self, instance):
+        self.manager.current = 'first'
+
+    def register_user(self, instance):
+        username = self.username_input.text
+        number = self.number_input.text
+        password = self.password_input.text
+        confirm_password = self.confirm_password_input.text
+
+        if password != confirm_password:
+            self.show_error_popup("Passwords do not match.")
+            return
+
+        signup_data = {'username': username, 'number': number, 'password': password}
+        signup_url = 'https://fund-flask.onrender.com/register'
+        UrlRequest(signup_url, req_body=json.dumps(signup_data),
+                   on_success=self.on_signup_success, on_failure=self.on_signup_failure,
+                   method='POST', req_headers={'Content-type': 'application/json'})
+
+    def on_signup_success(self, request, result):
+        print("Signup successful:", result)
+        self.manager.current = 'second'  
+
+    def on_signup_failure(self, request, result):
+        print("Signup failed:", result)
+
+    def show_error_popup(self, message):
+        popup_content = Label(text=message)
+        popup = Popup(title="Error",
+                      content=popup_content,
+                      size_hint=(None, None), size=(300, 150))
+        popup.open()
+class ProfileScreen(Screen):
+    def __init__(self, **kwargs):
+        super(ProfileScreen, self).__init__(**kwargs)
+
+        # Set the background image for the profile screen
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                        allow_stretch=True,
+                        keep_ratio=False)
+        self.add_widget(bg)
+
+        # Transposed Data
+        transposed_data = [
+            ['User Name', 'John Doe'],
+            ['Phone Number', '123-456-7890'],
+            ['Credits', '1000']
+        ]
+
+        # Create GridLayout for the transposed_data
+        transposed_data_layout = GridLayout(cols=2, spacing=10, size_hint=(None, None), size=(300, 200))
+        transposed_data_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+
+        # Create labels for the transposed_data table
+        for data in transposed_data:
+            for item in data:
+                label = Label(
+                    text=f"{item}",
+                    size_hint_y=None,
+                    height=dp(30)  # Set the height of each label
+                )
+                transposed_data_layout.add_widget(label)
+
+        # Wrap the transposed_data_layout inside a BoxLayout with background color
+        frame_layout = BoxLayout(orientation='vertical', size_hint=(None, None), size=(300, 200))
+        frame_layout.add_widget(transposed_data_layout)
+
+        # Set the background color of the frame_layout
+        with frame_layout.canvas.before:
+            Color(0, 0, 0, 0.5)  # Adjust the color as needed (RGBA values)
+            self.rect = Rectangle(pos=frame_layout.pos, size=frame_layout.size)
+
+        def update_rect(instance, value):
+            instance.rect.pos = instance.pos
+            instance.rect.size = instance.size
+
+        frame_layout.bind(pos=update_rect, size=update_rect)
+
+        self.add_widget(frame_layout)
 
 class SomeScreen(Screen):
 
@@ -919,6 +764,8 @@ class MyApp(MDApp):
         self.sm.add_widget(BeneficiaryScreen(name='beneficiary'))
         self.sm.add_widget(LoginScreen(name='login'))
         self.sm.add_widget(SignUpScreen(name='signup'))
+        self.sm.add_widget(ProfileScreen(name='profile'))
+
 
         if self.is_logged_in():
             self.sm.current = 'second'  

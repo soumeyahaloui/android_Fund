@@ -37,14 +37,13 @@ from kivymd.icon_definitions import md_icons
 from kivymd.uix.list import OneLineIconListItem
 import json
 from kivymd.uix.dialog import MDDialog
+from kivymd.uix.datatables import MDDataTable
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.label import MDLabel
 
 
 alpha_value = 0.5  
-
-
 reshaped_text = reshape('تسجيل')
-
-
 bidi_text = get_display(reshaped_text)
 
 class PlanetButton(ButtonBehavior, Image):
@@ -235,7 +234,7 @@ class FirstScreen(Screen):
             app = MDApp.get_running_app()
             app.logout_user()
 
-    def show_login_signup_options(self, instance):
+    def show_login_signup_options(self):
         content = BoxLayout(orientation='vertical', padding=10, spacing=10, size_hint_y=None)
         
         content.height = dp(100)  
@@ -261,8 +260,21 @@ class FirstScreen(Screen):
         self.manager.current = 'signup'
 
     def go_to_second_screen(self, instance):
-        self.manager.current = 'second'
+        app = MDApp.get_running_app()
 
+        # Check if the user is logged in before navigating to the second screen
+        if app.is_logged_in():
+            self.manager.current = 'second'
+        else:
+            self.show_login_signup_options()
+
+    def is_logged_in(self):
+        try:
+            with open('login_state.json', 'r') as file:
+                state = json.load(file)
+                return state.get('logged_in', False)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return False
 
 class SecondScreen(Screen):
     def __init__(self, **kwargs):
@@ -458,7 +470,6 @@ class SecondScreen(Screen):
         )
         self.add_widget(self.planet_button)
         self.planet_button.bind(on_release=self.show_user_options)
-
     
     def show_user_options(self, instance):
         app = MDApp.get_running_app()
@@ -469,6 +480,11 @@ class SecondScreen(Screen):
 
     def show_logout_option(self, instance):
         logout_menu_items = [
+            {
+            'text': 'Profile',  # New option for the logged-in user
+            'viewclass': 'OneLineListItem',
+            'on_release': lambda x='Profile': self.view_profile(x)
+        },
             {
                 'text': 'Log Out',
                 'viewclass': 'OneLineListItem',
@@ -484,6 +500,13 @@ class SecondScreen(Screen):
         )
 
         self.logout_menu.open()
+
+    def view_profile(self, text_item):
+        self.logout_menu.dismiss()
+        if text_item == 'Profile':
+            # Add the logic to navigate to the profile screen or perform any profile-related actions
+            self.manager.current = 'profile'
+
 
     def logout_user(self, text_item):
         self.logout_menu.dismiss()
@@ -1020,7 +1043,19 @@ class LoginScreen(Screen):
         first_initial = self.username_input.text[0].upper() if self.username_input.text else ''
         self.manager.get_screen('second').update_planet_button(first_initial)
         self.manager.current = 'second'  
+        # Assuming result is a dictionary containing user information
+        user_data = result.get('user', {})
+
+        # Pass user data to the ProfileScreen and update the UI
+        self.update_profile_screen(user_data)
+
+        # Navigate to the ProfileScreen
+        self.manager.current = 'profile'
         self.save_login_state(True)
+
+    def update_profile_screen(self, user_data):
+        profile_screen = self.manager.get_screen('profile')
+        profile_screen.update_user_profile(user_data)
 
     def save_login_state(self, logged_in):
         with open('login_state.json', 'w') as file:
@@ -1094,6 +1129,47 @@ class SignUpScreen(Screen):
                       content=popup_content,
                       size_hint=(None, None), size=(300, 150))
         popup.open()
+class ProfileScreen(Screen):
+    def __init__(self, **kwargs):
+        super(ProfileScreen, self).__init__(**kwargs)
+
+        # Set the background image for the profile screen
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                        allow_stretch=True,
+                        keep_ratio=False)
+        self.add_widget(bg)
+
+        layout = BoxLayout(orientation='vertical')
+
+        self.user_data_label = Label(text="", font_size=20, color=(0, 0, 0, 1))
+        layout.add_widget(self.user_data_label)
+
+        back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
+        back_button.bind(on_press=self.go_to_second_screen)
+   
+         # Add the back button to the layout
+        layout.add_widget(back_button)
+
+        # Add the layout to the profile screen
+        self.add_widget(layout)
+            
+    def go_to_second_screen(self, instance):
+        self.manager.current = 'second'
+
+    def update_user_profile(self, user_data):
+        print("Received user data:", user_data)
+
+        # Extract user information from the 'user' key        
+        username = user_data.get('username', '')
+        amount = user_data.get('amount', '')
+        phone_number = user_data.get('phone_number', '')
+
+        if username and amount and phone_number:
+            profile_text = f"Username: {username}\nAmount: {amount}\nPhone Number: {phone_number}"
+            self.user_data_label.text = profile_text
+        else:
+            # Handle the case where some information is missing
+            self.user_data_label.text = "User data is incomplete"
 
 class CustomMDTextField(MDTextField):
     def __init__(self, **kwargs):
@@ -1126,6 +1202,8 @@ class MyApp(MDApp):
         self.sm.add_widget(BeneficiaryScreen(name='beneficiary'))
         self.sm.add_widget(LoginScreen(name='login'))
         self.sm.add_widget(SignUpScreen(name='signup'))
+        self.sm.add_widget(ProfileScreen(name='profile'))
+
 
         if self.is_logged_in():
             self.sm.current = 'second'  
