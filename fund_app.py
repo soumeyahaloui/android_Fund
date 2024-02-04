@@ -40,6 +40,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.label import MDLabel
+import requests
 
 
 alpha_value = 0.5  
@@ -1170,6 +1171,22 @@ class ProfileScreen(Screen):
         else:
             # Handle the case where some information is missing
             self.user_data_label.text = "User data is incomplete"
+
+
+    def check_account(self, instance):
+        phone_number = self.phone_number_input.text
+        try:
+            response = requests.post('https://mock-server-atvi.onrender.com//check_account', json={'phone_number': phone_number})
+            if response.ok:
+                total_amount = response.json().get('amount', 0)
+                popup = Popup(title='Account Balance',
+                              content=Label(text=f'Balance: {total_amount}'),
+                              size_hint=(None, None), size=(200, 200))
+                popup.open()
+            else:
+                print('Failed to check account')
+        except requests.RequestException as e:
+            print(f'Request failed: {e}')
 
 class CustomMDTextField(MDTextField):
     def __init__(self, **kwargs):
