@@ -1178,17 +1178,16 @@ class ProfileScreen(Screen):
 
         # Extract user information from the 'user' key        
         username = user_data.get('username', '')
-        amount = user_data.get('amount', '')
         phone_number = user_data.get('phone_number', '')
         print(f"phone number", phone_number)
 
 
-        if username and amount and phone_number:
+        if username and phone_number:
             if total_amount is not None:
                 # If total_amount is provided, include it in the profile text
-                profile_text = f"Username: {username}\nAmount: {amount}\nPhone Number: {phone_number}\nTotal Amount: {total_amount}"
+                profile_text = f"Username: {username}\nPhone Number: {phone_number}\nTotal Amount: {total_amount}"
             else:
-                profile_text = f"Username: {username}\nAmount: {amount}\nPhone Number: {phone_number}"
+                profile_text = f"Username: {username}\nPhone Number: {phone_number}"
 
             self.user_data_label.text = profile_text
         else:
