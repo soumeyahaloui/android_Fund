@@ -316,6 +316,8 @@ class SecondScreen(Screen):
         layout.spacing = dp(2)
         layout.padding = dp(2)
 
+        app = MDApp.get_running_app()
+        self.phone_number = app.phone_number
 
         
         for i in range(1, 5):
@@ -471,6 +473,29 @@ class SecondScreen(Screen):
         )
         self.add_widget(self.planet_button)
         self.planet_button.bind(on_release=self.show_user_options)
+
+    def on_pre_enter(self):
+        super().on_pre_enter()
+        app = MDApp.get_running_app()
+        phone_number = app.phone_number  # Access phone_number attribute from MyApp class
+        if phone_number:
+            self.check_account(phone_number)
+
+    def check_account(self, phone_number):
+        try:            
+            response = requests.post('https://mock-server-atvi.onrender.com//check_account', json={'phone_number': phone_number})
+            if response.ok:
+                total_amount = response.json().get('amount', 0)
+                print(f'total amount is', total_amount)
+            else:
+                print('Failed to check account')
+        except requests.RequestException as e:
+            print(f'Request failed: {e}')
+
+    
+
+    def update_phone_number(self, phone_number):
+        self.phone_number = phone_number
     
     def show_user_options(self, instance):
         app = MDApp.get_running_app()
@@ -1136,6 +1161,8 @@ class LoginScreen(Screen):
 
         # Store user data in self.user_data
         self.user_data = user_data
+        app = MDApp.get_running_app()
+        app.set_phone_number(user_data.get('phone_number'))
         
         first_initial = user_data.get('username', '')[0].upper() if user_data.get('username') else ''
         self.manager.get_screen('second').update_planet_button(first_initial)
@@ -1144,6 +1171,7 @@ class LoginScreen(Screen):
 
         # Pass user data to the ProfileScreen and update the UI
         self.update_profile_screen(user_data)
+        self.save_login_state(True)
 
         # Navigate to the ProfileScreen
         # self.manager.current = 'profile'
@@ -1216,6 +1244,8 @@ class ProfileScreen(Screen):
             # Handle the case where some information is missing
             self.user_data_label.text = "User data is incomplete"
 
+        app = MDApp.get_running_app()
+        app.phone_number = phone_number
 
     def check_account(self, instance):
         login_screen = self.manager.get_screen('login')
@@ -1267,6 +1297,12 @@ class SomeScreen(Screen):
         app.sm.current = 'login'
 
 class MyApp(MDApp):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.phone_number = None  # Initialize phone_number attribute
+
+    def set_phone_number(self, phone_number):
+        self.phone_number = phone_number
 
     def build(self):
         self.sm = ScreenManager()
