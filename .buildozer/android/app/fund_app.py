@@ -749,7 +749,24 @@ class SecondScreen(Screen):
         
         amount = float(amount)
 
+        # Deduct the donation amount from the total amount
+        user_data = self.manager.get_screen('login').user_data
+        total_amount = user_data.get('total_amount', 0)
+
+        print(f"Current total amount before donation: {total_amount}")
+
         
+        if amount > total_amount:
+            self.show_error_popup("Insufficient funds for donation.")
+            dialog.dismiss()
+            return
+
+        new_total_amount = total_amount - amount
+
+        # Update the user's total amount in the UI and user data
+        self.manager.get_screen('login').update_total_amount(new_total_amount)
+        self.update_user_profile(user_data, new_total_amount)
+
         top_text_widget = self.widget_ids.get(f'top_text_{counter_key[-1]}')
         if top_text_widget:
             goal_text = top_text_widget.text
@@ -993,77 +1010,6 @@ class BeneficiaryScreen(Screen):
         instance.frame.pos = (instance.pos[0] - 10, instance.pos[1] - 10)
         instance.frame.size = (instance.size[0] + 20, instance.size[1] + 20)
 
-class LoginScreen(Screen):
-    def __init__(self, **kwargs):
-        super(LoginScreen, self).__init__(**kwargs)
-
-        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
-                allow_stretch=True,
-                keep_ratio=False)
-        self.add_widget(bg)
-
-        login_layout = FloatLayout()
-
-        grid_layout = GridLayout(cols=1, spacing=10, padding=10, size_hint=(None, None), size=(300, 200))
-        grid_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
-
-        back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
-        back_button.bind(on_press=self.go_to_first_screen)
-
-        self.username_input = CustomMDTextField(hint_text='Username or Number', multiline=False)
-        grid_layout.add_widget(self.username_input)
-
-        self.password_input = CustomMDTextField(hint_text='Password', password=True, multiline=False)
-        grid_layout.add_widget(self.password_input)
-
-        login_button = MDRaisedButton(text='Login', size_hint=(None, None), size=(150, 48))
-        login_button.bind(on_press=self.login_user)
-        
-        login_button.pos_hint = {'center_x': 0.5, 'y': 0.1}
-        
-        login_layout.add_widget(grid_layout)
-        login_layout.add_widget(login_button)
-        login_layout.add_widget(back_button)
-
-        self.add_widget(login_layout)
-
-    def go_to_first_screen(self, instance):
-        self.manager.current = 'first'
-
-    def login_user(self, instance):
-        username = self.username_input.text
-        password = self.password_input.text
-        login_data = {'username': username, 'password': password}
-        login_url = 'https://fund-flask.onrender.com/login'
-        UrlRequest(login_url, req_body=json.dumps(login_data),
-                   on_success=self.on_login_success, on_failure=self.on_login_failure,
-                   method='POST', req_headers={'Content-type': 'application/json'})
-
-    def on_login_success(self, request, result):
-        print("Login successful:", result)
-        first_initial = self.username_input.text[0].upper() if self.username_input.text else ''
-        self.manager.get_screen('second').update_planet_button(first_initial)
-        self.manager.current = 'second'  
-        # Assuming result is a dictionary containing user information
-        user_data = result.get('user', {})
-
-        # Pass user data to the ProfileScreen and update the UI
-        self.update_profile_screen(user_data)
-
-        # Navigate to the ProfileScreen
-        self.manager.current = 'profile'
-        self.save_login_state(True)
-
-    def update_profile_screen(self, user_data):
-        profile_screen = self.manager.get_screen('profile')
-        profile_screen.update_user_profile(user_data)
-
-    def save_login_state(self, logged_in):
-        with open('login_state.json', 'w') as file:
-            json.dump({'logged_in': logged_in}, file)
-
-    def on_login_failure(self, request, result):
-        print("Login failed:", result)
 
 class SignUpScreen(Screen):
     def __init__(self, **kwargs):
@@ -1130,6 +1076,90 @@ class SignUpScreen(Screen):
                       content=popup_content,
                       size_hint=(None, None), size=(300, 150))
         popup.open()
+
+class LoginScreen(Screen):
+    def __init__(self, **kwargs):
+        super(LoginScreen, self).__init__(**kwargs)
+        self.user_data = {}  # Initialize user_data as an empty dictionary
+
+
+        bg = AsyncImage(source='https://cdn.glitch.global/53883c99-cc30-4656-9386-14bc8357b85c/fundd.png?v=1706210860343',
+                allow_stretch=True,
+                keep_ratio=False)
+        self.add_widget(bg)
+
+        login_layout = FloatLayout()
+
+        grid_layout = GridLayout(cols=1, spacing=10, padding=10, size_hint=(None, None), size=(300, 200))
+        grid_layout.pos_hint = {'center_x': 0.5, 'center_y': 0.5}
+
+        back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
+        back_button.bind(on_press=self.go_to_first_screen)
+
+        self.username_input = CustomMDTextField(hint_text='Username or Number', multiline=False)
+        grid_layout.add_widget(self.username_input)
+
+        self.password_input = CustomMDTextField(hint_text='Password', password=True, multiline=False)
+        grid_layout.add_widget(self.password_input)
+
+        login_button = MDRaisedButton(text='Login', size_hint=(None, None), size=(150, 48))
+        login_button.bind(on_press=self.login_user)
+        
+        login_button.pos_hint = {'center_x': 0.5, 'y': 0.1}
+        
+        login_layout.add_widget(grid_layout)
+        login_layout.add_widget(login_button)
+        login_layout.add_widget(back_button)
+
+        self.add_widget(login_layout)
+
+    
+    def update_total_amount(self, new_total_amount):
+        user_data = self.user_data
+        user_data['total_amount'] = new_total_amount
+
+    def go_to_first_screen(self, instance):
+        self.manager.current = 'first'
+
+    def login_user(self, instance):
+        username = self.username_input.text
+        password = self.password_input.text
+        login_data = {'username': username, 'password': password}
+        login_url = 'https://fund-flask.onrender.com/login'
+        UrlRequest(login_url, req_body=json.dumps(login_data),
+                   on_success=self.on_login_success, on_failure=self.on_login_failure,
+                   method='POST', req_headers={'Content-type': 'application/json'})
+
+    def on_login_success(self, request, result):
+        print("Login successful:", result)
+        user_data = result.get('user', {})
+
+        # Store user data in self.user_data
+        self.user_data = user_data
+        
+        first_initial = user_data.get('username', '')[0].upper() if user_data.get('username') else ''
+        self.manager.get_screen('second').update_planet_button(first_initial)
+        self.manager.current = 'second'  
+        
+
+        # Pass user data to the ProfileScreen and update the UI
+        self.update_profile_screen(user_data)
+
+        # Navigate to the ProfileScreen
+        # self.manager.current = 'profile'
+        self.save_login_state(True)
+
+    def update_profile_screen(self, user_data):
+        profile_screen = self.manager.get_screen('profile')
+        profile_screen.update_user_profile(user_data)
+
+    def save_login_state(self, logged_in):
+        with open('login_state.json', 'w') as file:
+            json.dump({'logged_in': logged_in}, file)
+
+    def on_login_failure(self, request, result):
+        print("Login failed:", result)
+
 class ProfileScreen(Screen):
     def __init__(self, **kwargs):
         super(ProfileScreen, self).__init__(**kwargs)
@@ -1147,26 +1177,40 @@ class ProfileScreen(Screen):
 
         back_button = MDIconButton(icon='arrow-left', pos_hint={'x': 0, 'top': 1})
         back_button.bind(on_press=self.go_to_second_screen)
-   
-         # Add the back button to the layout
-        layout.add_widget(back_button)
 
-        # Add the layout to the profile screen
+         # Add the back button to the layout
+        layout.add_widget(back_button)        
+
         self.add_widget(layout)
+
+    def on_enter(self):
+        # This method will be called when the screen is displayed
+        Clock.schedule_once(self.delayed_check_account, 0.1)
+
+    def delayed_check_account(self, dt):
+        # This method will be called after a short delay (0.1 seconds)
+        self.check_account(None)
+
             
     def go_to_second_screen(self, instance):
         self.manager.current = 'second'
 
-    def update_user_profile(self, user_data):
+    def update_user_profile(self, user_data, total_amount=None):
         print("Received user data:", user_data)
 
         # Extract user information from the 'user' key        
         username = user_data.get('username', '')
-        amount = user_data.get('amount', '')
         phone_number = user_data.get('phone_number', '')
+        print(f"phone number", phone_number)
 
-        if username and amount and phone_number:
-            profile_text = f"Username: {username}\nAmount: {amount}\nPhone Number: {phone_number}"
+
+        if username and phone_number:
+            if total_amount is not None:
+                # If total_amount is provided, include it in the profile text
+                profile_text = f"Username: {username}\nPhone Number: {phone_number}\nTotal Amount: {total_amount}"
+            else:
+                profile_text = f"Username: {username}\nPhone Number: {phone_number}"
+
             self.user_data_label.text = profile_text
         else:
             # Handle the case where some information is missing
@@ -1174,19 +1218,32 @@ class ProfileScreen(Screen):
 
 
     def check_account(self, instance):
-        phone_number = self.phone_number_input.text
+        login_screen = self.manager.get_screen('login')
+        user_data = login_screen.user_data
+
+        phone_number = user_data.get('phone_number', '')  # Assuming 'phone_number' is in user_data
         try:
+            # Ensure 'phone_number' is included in the request payload
+            if not phone_number:
+                print("Phone number is missing in user_data.")
+                return
+
             response = requests.post('https://mock-server-atvi.onrender.com//check_account', json={'phone_number': phone_number})
             if response.ok:
-                total_amount = response.json().get('amount', 0)
-                popup = Popup(title='Account Balance',
-                              content=Label(text=f'Balance: {total_amount}'),
-                              size_hint=(None, None), size=(200, 200))
-                popup.open()
+                total_amount_str = response.json().get('amount', '0.00')
+            
+                # Convert total amount to float
+                total_amount = float(total_amount_str)
+                print(f"Total amount received: {total_amount}")
+
+                self.update_user_profile(user_data, total_amount)
+
             else:
-                print('Failed to check account')
+                print(f'Failed to check account. Status Code: {response.status_code}, Response Content: {response.content}')
         except requests.RequestException as e:
             print(f'Request failed: {e}')
+
+
 
 class CustomMDTextField(MDTextField):
     def __init__(self, **kwargs):
