@@ -749,7 +749,24 @@ class SecondScreen(Screen):
         
         amount = float(amount)
 
+        # Deduct the donation amount from the total amount
+        user_data = self.manager.get_screen('login').user_data
+        total_amount = user_data.get('total_amount', 0)
+
+        print(f"Current total amount before donation: {total_amount}")
+
         
+        if amount > total_amount:
+            self.show_error_popup("Insufficient funds for donation.")
+            dialog.dismiss()
+            return
+
+        new_total_amount = total_amount - amount
+
+        # Update the user's total amount in the UI and user data
+        self.manager.get_screen('login').update_total_amount(new_total_amount)
+        self.update_user_profile(user_data, new_total_amount)
+
         top_text_widget = self.widget_ids.get(f'top_text_{counter_key[-1]}')
         if top_text_widget:
             goal_text = top_text_widget.text
@@ -1096,6 +1113,11 @@ class LoginScreen(Screen):
 
         self.add_widget(login_layout)
 
+    
+    def update_total_amount(self, new_total_amount):
+        user_data = self.user_data
+        user_data['total_amount'] = new_total_amount
+
     def go_to_first_screen(self, instance):
         self.manager.current = 'first'
 
@@ -1208,7 +1230,12 @@ class ProfileScreen(Screen):
 
             response = requests.post('https://mock-server-atvi.onrender.com//check_account', json={'phone_number': phone_number})
             if response.ok:
-                total_amount = response.json().get('amount', 0)
+                total_amount_str = response.json().get('amount', '0.00')
+            
+                # Convert total amount to float
+                total_amount = float(total_amount_str)
+                print(f"Total amount received: {total_amount}")
+
                 self.update_user_profile(user_data, total_amount)
 
             else:
