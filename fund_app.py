@@ -485,7 +485,10 @@ class SecondScreen(Screen):
         try:            
             response = requests.post('https://mock-server-atvi.onrender.com//check_account', json={'phone_number': phone_number})
             if response.ok:
-                total_amount = response.json().get('amount', 0)
+                total_amount_str = response.json().get('amount', '0')  # Default to '0' if 'amount' key is missing
+                total_amount = float(total_amount_str)  # Convert total_amount_str to float
+                self.check_account_result = total_amount  
+
                 print(f'total amount is', total_amount)
             else:
                 print('Failed to check account')
@@ -774,9 +777,7 @@ class SecondScreen(Screen):
         
         amount = float(amount)
 
-        # Deduct the donation amount from the total amount
-        user_data = self.manager.get_screen('login').user_data
-        total_amount = user_data.get('total_amount', 0)
+        total_amount = self.check_account_result
 
         print(f"Current total amount before donation: {total_amount}")
 
@@ -787,10 +788,9 @@ class SecondScreen(Screen):
             return
 
         new_total_amount = total_amount - amount
+        print(f"New total amount after donation: {new_total_amount}")
 
-        # Update the user's total amount in the UI and user data
-        self.manager.get_screen('login').update_total_amount(new_total_amount)
-        self.update_user_profile(user_data, new_total_amount)
+
 
         top_text_widget = self.widget_ids.get(f'top_text_{counter_key[-1]}')
         if top_text_widget:
