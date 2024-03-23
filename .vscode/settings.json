@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "fenced-ox-14157.8nj.gcp-europe-west1.cockroachlabs.cloud",
+            "port": 26257,
+            "driver": "MySQL",
+            "name": "fundr_db",
+            "database": "defaultdb",
+            "username": "SB.hadeel"
+        }
+    ]
+}
